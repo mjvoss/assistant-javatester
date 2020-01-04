@@ -11,6 +11,9 @@ public class Assert {
 	}
 	
 	public static void assertContains(String message, String response, String searchText) {
+		System.out.println("A " + response);
+		System.out.println("E " + searchText);
+
 		assertTrue(message, response.contains(searchText));
 	}
 	
@@ -20,6 +23,8 @@ public class Assert {
 	
 	public static void assertContains(String message, MessageResponse response, String searchText) {
 		String outputText = String.join(", ", response.getOutput().getText());
+		System.out.println("A " + outputText);
+		System.out.println("E " + searchText);
 		assertTrue(message, outputText.contains(searchText));
 	}
 	

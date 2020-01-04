@@ -15,20 +15,18 @@ import org.junit.Test;
 import com.ibm.watson.developer_cloud.assistant.v1.Assistant;
 import com.ibm.watson.developer_cloud.assistant.v1.model.MessageResponse;
 import com.ibm.watson.developer_cloud.assistant_tester.etl.ConversationTestLoader;
+import com.ibm.watson.developer_cloud.assistant_tester.orchestrator_sample.WebServiceOrchestrator;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
  
 @RunWith(Parameterized.class)
-public class ExampleTest_Parameterized {
+public class OrchestratorParameterizedTest {
 
 	private Conversation conversation = null;
-	
-	private static String USERNAME = System.getProperty("ASSISTANT_USERNAME");
-	private static String PASSWORD = System.getProperty("ASSISTANT_PASSWORD");
-	private static String VERSION = "2018-02-16";
-	private static String WORKSPACE_ID = System.getProperty("WORKSPACE_ID");
+	private WebServiceOrchestrator ucg = null;
+	private static String TARGET_URL = System.getProperty(" TARGET_URL");
 	
     @Parameters(name="{0}")
     public static Collection<Object[]> data() {
@@ -48,27 +46,25 @@ public class ExampleTest_Parameterized {
 		
 			Properties prop = new Properties();
 			//ClassLoader loader = Thread.currentThread().getContextClassLoader();           
-			InputStream stream = ExampleTest_Parameterized.class.getClassLoader().getResourceAsStream("env.properties");
+			InputStream stream = OrchestratorParameterizedTest.class.getClassLoader().getResourceAsStream("ucg.properties");
+			System.out.println(stream);
 			prop.load(stream);
-			USERNAME= prop.getProperty("ASSISTANT_USERNAME");
-			PASSWORD= prop.getProperty("ASSISTANT_PASSWORD");
-			WORKSPACE_ID= prop.getProperty("WORKSPACE_ID");
+			TARGET_URL= prop.getProperty("TARGET_URL");
 
 		} catch (java.io.IOException e) {
 			e.printStackTrace();//TODO: handle exception
 		}
-    	if(USERNAME == null || PASSWORD == null || WORKSPACE_ID == null) {
-    		System.err.println("Required environment variables are ASSISTANT_USERNAME, ASSISTANT_PASSWORD, and WORKSPACE_ID");
+		if(TARGET_URL == null) {
+    		System.err.println("Required environment variables are TARGET_URL");
     		System.exit(-1);
     	}
     }
 	
 	@Before
 	public void setup() {
-	    Assistant service = new Assistant(VERSION);
-	    service.setUsernameAndPassword(USERNAME, PASSWORD);
-
-	    conversation = new Conversation(service, WORKSPACE_ID);
+	    ucg = new WebServiceOrchestrator("foo");
+	    //service.setUsernameAndPassword(USERNAME, PASSWORD);
+	    conversation = new Conversation();
 	}
 	
 	@After
@@ -77,7 +73,7 @@ public class ExampleTest_Parameterized {
 	}
 	
 	private final ConversationTest test;
-	public ExampleTest_Parameterized(ConversationTest test) {
+	public OrchestratorParameterizedTest(ConversationTest test) {
 		this.test = test;
 	}
 	
@@ -92,11 +88,11 @@ public class ExampleTest_Parameterized {
 		}
 		
 		
-		MessageResponse response = null;
+		String response = null;
 		int turnCounter = 0;
 		for(Turn t : test.getTurns()) {
 			turnCounter++;
-			response = conversation.turn(t.getUtterance());
+			response = ucg.onInput(t.getUtterance());
 
 			if(t.getExpectedOutput().length() > 0) {
 				assertContains("turn " + turnCounter + " text", response, t.getExpectedOutput());
@@ -104,7 +100,7 @@ public class ExampleTest_Parameterized {
 			if(t.getContext() != null && t.getContext().length > 0) {
 				for(int i = 0; i < t.getContext().length; i += 2) {
 					assertContext("turn " + turnCounter + " state " + t.getContext()[i], 
-							response, t.getContext()[i], t.getContext()[i+1]);
+							conversation.getContext(), t.getContext()[i], t.getContext()[i+1]);
 				}
 			}
 		}

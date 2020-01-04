@@ -20,6 +20,13 @@ public class Conversation {
 		this.workspaceId = workspaceId;
 		reset();
 	}
+	public Conversation() {
+	//	this.service = assistant;
+		this.workspaceId = "null";
+		this.service = null;
+		reset();
+	}
+
 	
 	/** Starts a new conversation */
 	public void reset() {
@@ -32,17 +39,29 @@ public class Conversation {
 	 * @return Full response from Watson Assistant
 	 */
 	public MessageResponse turn(String utterance) {
+		/*
 	    InputData input = new InputData.Builder(utterance).build();
 	    MessageOptions options = new MessageOptions.Builder(workspaceId)
 	        .input(input)
 	        .context(context)
 	        .build();
-
+	        */
+		MessageOptions options = buildMessage(utterance);
 	    // synchronous request
 	    MessageResponse response = service.message(options).execute();	
 	    context = response.getContext();
 	    return response;
 	}
+	
+	public MessageOptions buildMessage(String utterance) {
+	    InputData input = new InputData.Builder(utterance).build();
+	    MessageOptions options = new MessageOptions.Builder(workspaceId)
+	        .input(input)
+	        .context(context)
+	        .build();
+	    return options;
+	}
+	
 	
 	/**
 	 * Gets the state for the current Watson Assistant conversation
@@ -50,5 +69,9 @@ public class Conversation {
 	 */
 	public Context getContext() {
 		return context;
+	}
+	
+	public void setContext(Context context) {
+		this.context = context;
 	}
 }
